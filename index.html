@@ -122,7 +122,8 @@
 
   /* ---- header ---- */
   header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
-  .brand { display: flex; align-items: center; gap: 11px; margin-right: auto; }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
   .brand .mark {
     width: 34px; height: 34px; border-radius: 9px; flex: none;
     background: var(--accent); color: var(--accent-ink);
@@ -327,15 +328,17 @@
         <p>Personal expense tracker</p>
       </div>
     </div>
-    <button class="sync-chip" id="syncChip" type="button" hidden aria-live="polite" title="Sync status"></button>
-    <div class="seg" id="curSeg" role="group" aria-label="Currency">
-      <button data-cur="₹" aria-pressed="true">₹</button>
-      <button data-cur="$" aria-pressed="false">$</button>
-      <button data-cur="€" aria-pressed="false">€</button>
-      <button data-cur="£" aria-pressed="false">£</button>
+    <div class="controls">
+      <button class="sync-chip" id="syncChip" type="button" hidden aria-live="polite" title="Sync status"></button>
+      <div class="seg" id="curSeg" role="group" aria-label="Currency">
+        <button data-cur="₹" aria-pressed="true">₹</button>
+        <button data-cur="$" aria-pressed="false">$</button>
+        <button data-cur="€" aria-pressed="false">€</button>
+        <button data-cur="£" aria-pressed="false">£</button>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
+      <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Storage &amp; settings">⚙</button>
     </div>
-    <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
-    <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Storage &amp; settings">⚙</button>
   </header>
 
   <section class="card summary" aria-label="Spending summary">
