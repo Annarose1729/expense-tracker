@@ -1,4 +1,16 @@
 <title>Ledger</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A personal expense tracker with category and time breakdowns.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="theme-color" content="#f2f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#100f0d" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -87,16 +99,26 @@
 
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+  html { background: var(--page); -webkit-text-size-adjust: 100%; min-height: 100%; }
   body {
     margin: 0;
+    min-height: 100%;
     background: var(--page);
     color: var(--ink);
     font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
     line-height: 1.45;
   }
   .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding-block: 22px 56px; padding-inline: 20px; }
+  .wrap {
+    max-width: 1120px; margin: 0 auto;
+    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-bottom: calc(48px + env(safe-area-inset-bottom));
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+  button { touch-action: manipulation; }
 
   /* ---- header ---- */
   header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
@@ -285,8 +307,15 @@
   @media (max-width: 460px) {
     .hero .figure { font-size: 38px; }
     .brand p { display: none; }
+    header.top { gap: 9px; margin-bottom: 18px; }
+    .summary { padding: 18px 16px; }
+    .card-pad { padding: 16px; }
+    .ranges button { padding: 8px 13px; }
+    .tile .v { font-size: 18px; }
+    .modal-overlay { padding: 12px; }
+    .modal { max-height: 88dvh; }
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 </style>
 
 <div class="wrap">
@@ -814,7 +843,7 @@
     function emit() { if (cb) cb(data.slice()); }
     return {
       subscribe: function (f) { cb = f; f(data.slice()); },
-      start: function () {}, refresh: function () {},
+      start: function () {}, refresh: function () {}, stop: function () {},
       add: function (o) { data.push(o); save(); emit(); return Promise.resolve(); },
       remove: function (id) { data = data.filter(function (e) { return e.id !== id; }); save(); emit(); return Promise.resolve(); }
     };
@@ -885,10 +914,20 @@
       });
     }
 
+    var pollTimer = null;
+    function startPoll() {
+      stopPoll();
+      pollTimer = setInterval(function () {
+        if (document.visibilityState !== "hidden" && navigator.onLine) enqueue(doSync);
+      }, 45000);   // keep an open app fresh without hammering the sheet
+    }
+    function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
     return {
       subscribe: function (f) { cb = f; emit(); },
-      start: function () { enqueue(doSync); },
+      start: function () { enqueue(doSync); startPoll(); },
       refresh: function () { enqueue(doSync); },
+      stop: function () { stopPoll(); },
       add: function (o) { mem.expenses.unshift(o); mem.pendingAdd.push(o); saveCache(); emit(); enqueue(doSync); return Promise.resolve(); },
       remove: function (id) { mem.expenses = mem.expenses.filter(function (e) { return e.id !== id; }); if (mem.pendingDel.indexOf(id) < 0) mem.pendingDel.push(id); mem.pendingAdd = mem.pendingAdd.filter(function (e) { return e.id !== id; }); saveCache(); emit(); enqueue(doSync); return Promise.resolve(); }
     };
@@ -987,6 +1026,7 @@
     window.addEventListener("focus", function () { if (store && store.refresh) store.refresh(); });
     window.addEventListener("online", function () { if (store && store.refresh) store.refresh(); });
     window.addEventListener("offline", function () { if (getSheetCfg() && pref("led-mode", "local") === "sheet") setSync("offline"); });
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && store && store.refresh) store.refresh(); });
   }
 
   function wireSettings() {
@@ -1057,6 +1097,7 @@
   }
 
   function activateStore() {
+    if (store && store.stop) store.stop();
     var mode = pref("led-mode", "local");
     var cfg = getSheetCfg();
     var useSheet = mode === "sheet" && cfg && cfg.url && cfg.key;

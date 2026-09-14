@@ -1,0 +1,16 @@
+{
+  "name": "Ledger — Expense Tracker",
+  "short_name": "Ledger",
+  "description": "A personal expense tracker with category and time breakdowns.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f1ec",
+  "theme_color": "#127a63",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
